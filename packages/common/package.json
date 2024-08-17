@@ -1,5 +1,5 @@
 {
-  "name": "@yash-test/stencil",
+  "name": "@samagra-x/stencil",
   "version": "0.0.6",
   "description": "Stencil - An opinionated backend framework for NodeJS based on NestJS",
   "author": "Yash Mittal (@techsavvyash) & Team SamagraX",
@@ -43,7 +43,7 @@
     "@temporalio/client": "^1.8.6",
     "@temporalio/worker": "^1.8.6",
     "@types/multer": "^1.4.11",
-    "axios": "^1.7.2",
+    "axios": "^1.7.4",
     "cache-manager": "^5.2.4",
     "cache-manager-redis-store": "2",
     "fastify": "^4.27.0",
@@ -84,7 +84,6 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.3.3"
   },
-
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged"
@@ -97,4 +96,3 @@
     ]
   }
 }
-

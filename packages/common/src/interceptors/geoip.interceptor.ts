@@ -11,6 +11,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Observable } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
+import axios from 'axios';
 
 @Injectable()
 export class GeoIPInterceptor implements NestInterceptor {
@@ -39,18 +40,15 @@ export class GeoIPInterceptor implements NestInterceptor {
   ): Promise<Observable<any>> {
     const request = context.switchToHttp().getRequest();
 
-    // Extract IP address
     const clientIp =
-      request.headers['request.ip'] ||
+      request.headers['ip'] ||
       request.ip ||
       request.headers['x-forwarded-for'];
 
     this.logger.verbose('Using IP address for geolocation:', clientIp);
 
     try {
-      // Call the geolocation service to get the country from the IP
       const { country, regionName } = await this.getLocation(clientIp);
-
       if (
         this.allowedCountries.length > 0 &&
         !this.allowedCountries.includes(country)
@@ -58,10 +56,9 @@ export class GeoIPInterceptor implements NestInterceptor {
         this.logger.error(
           'Denying request from IP: ' + clientIp + ' country: ' + country,
         );
-
         throw new HttpException(
           this.accessDeniedMessage,
-          this.accessDeniedStatus,
+          this.accessDeniedStatus
         );
       }
 
@@ -69,24 +66,27 @@ export class GeoIPInterceptor implements NestInterceptor {
         'Allowed request from IP: ' + clientIp + ' region: ' + regionName,
       );
     } catch (err) {
-      this.logger.error('Error occurred while reading the geoip database', err);
-      throw new InternalServerErrorException(
-        'Error occurred while reading the geoip database',
-      );
+      if (err instanceof HttpException) {
+        this.logger.error(
+          `HttpException: ${err.message} with status code: ${err.getStatus()}`
+        );
+      } else {
+        this.logger.error('Unexpected error: ', err.message);
+        throw new InternalServerErrorException(
+          'Error occurred while reading the geoip database',
+        );
+      }
     }
-
-    // Continue handling the request
     return next.handle();
   }
 
   async getLocation(ip: string): Promise<any> {
     try {
-      const geoIp = this.configService.get<string>('GEO_IP');
-      return await this.httpService.axiosRef.get(
+      const response = await this.httpService.axiosRef.get(
         `http://geoip.samagra.io/city/${ip}`,
       );
+      return response.data; 
     } catch (err) {
-      this.logger.error('Error occurred while reading the geoip service', err);
       throw new InternalServerErrorException(
         'Error occurred while reading the geoip database',
       );
