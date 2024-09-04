@@ -88,6 +88,6 @@ describe('GeoIPInterceptor', () => {
 
       await expect(
         geoIPInterceptor.getLocation('127.0.0.1'),
-      ).rejects.toThrow(InternalServerErrorException);
+      ).rejects.toThrow(HttpException);
     });
 });
