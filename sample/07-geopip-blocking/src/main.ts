@@ -6,7 +6,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalInterceptors(new GeoIPInterceptor({
     countries: ['India', 'United States'],
-    cities: ['Mumbai', 'New York'],
+    cities: ['Paris'],
     coordinates: [{ lat: 35.6897, lon: 139.6895 }], // Tokyo
     geofences: [{ lat: 51.5074, lon: -0.1278, radius: 50 }], // London, UK
   }));

@@ -56,19 +56,19 @@ export class GeoIPInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest();
     const response = context.switchToHttp().getResponse();
     const clientIp = request.headers['ip'];
-    if(clientIp === undefined) {
+    if (clientIp === undefined) {
       response.status(HttpStatus.BAD_REQUEST).json({
         statusCode: HttpStatus.BAD_REQUEST,
         message: 'No IP address found',
       });
-      throw new Error('No IP address found');
+      return of(null);
     }
     if (!this.isValidIp(clientIp.trim())) {
       response.status(HttpStatus.BAD_REQUEST).json({
         statusCode: HttpStatus.BAD_REQUEST,
         message: 'Invalid IP address',
       });
-      throw new Error('Invalid IP address');
+      return of(null); 
     }
     this.logger.verbose(`Using IP address for geolocation: ${clientIp}`);
 
@@ -99,12 +99,18 @@ export class GeoIPInterceptor implements NestInterceptor {
         return of(null); 
       }
     } catch (err) {
-      this.handleError(err, response);
+      return this.handleError(err, response);
     }
   }
 
-  private handleError(err: any, response: any): void {
-    if (err instanceof HttpException) {
+  private handleError(err: any, response: any): Observable<any> {
+    if (err.response?.status === 404) {
+      this.logger.error(`Address not found for IP`);
+      response.status(HttpStatus.NOT_FOUND).json({
+        statusCode: HttpStatus.NOT_FOUND,
+        message: 'Address not found',
+      });
+    } else if (err instanceof HttpException) {
       this.logger.error(`HttpException: ${err.message} with status code: ${err.getStatus()}`);
       response.status(err.getStatus()).json({
         statusCode: err.getStatus(),
@@ -117,6 +123,7 @@ export class GeoIPInterceptor implements NestInterceptor {
         message: 'Error occurred while processing the request',
       });
     }
+    return of(null); 
   }
 
   private isInGeofence(lat: number, lon: number): boolean {
@@ -129,12 +136,11 @@ export class GeoIPInterceptor implements NestInterceptor {
     });
   }
 
-   async getLocation(ip: string): Promise<any> {
+  async getLocation(ip: string): Promise<any> {
     try {
       const response = await this.httpService.axiosRef.get(`http://geoip.samagra.io/city/${ip}`);
       return response.data;
     } catch (err) {
-      this.logger.error(`Error occurred while reading the geoip database: ${err.message}`);
       throw new HttpException(
         'Error occurred while reading the geoip database',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -148,5 +154,4 @@ export class GeoIPInterceptor implements NestInterceptor {
 
     return ipv4Regex.test(ip) || ipv6Regex.test(ip);
   }
-  
 }
