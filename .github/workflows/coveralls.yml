@@ -21,6 +21,7 @@ jobs:
 
     - name: Report Coveralls
       run: |
+        cd packages/common
         npm install coveralls
         cat coverage/lcov.info | npx coveralls
       env:
