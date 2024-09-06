@@ -1,12 +1,11 @@
-on: push
-
 name: Coveralls
+
+on: push
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-
     - uses: actions/checkout@v3
 
     - name: Use Node.js 18.x
@@ -14,28 +13,16 @@ jobs:
       with:
         node-version: 18.x
 
-    - name: npm install, make test-coverage
+    - name: Install dependencies and run tests
       run: |
-        cd packages
-        cd common
+        cd packages/common
         npm install
         npm test -- --coverage
 
-    - name: Report Coveralls (Linux)
-      if: startsWith(runner.os, 'Linux')
-      run: curl -sL https://coveralls.io/coveralls-linux.tar.gz | tar -xz && ./coveralls
-      env:
-        COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Report Coveralls (Windows)
-      if: startsWith(runner.os, 'Windows')
-      run: curl -sL https://github.com/coverallsapp/coverage-reporter/releases/latest/download/coveralls-windows.zip | zcat > ./coveralls.exe && ./coveralls.exe
-      env:
-        COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Report Coveralls (macOS)
-      if: startsWith(runner.os, 'macOS')
+    - name: Report Coveralls
       run: |
-        brew tap coverallsapp/coveralls --quiet
-        brew install coveralls --quiet
-        coveralls
+        cd packages/common
+        npm install coveralls
+        cat coverage/lcov.info | npx coveralls
+      env:
+        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
