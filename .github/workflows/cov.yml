@@ -16,6 +16,8 @@ jobs:
 
     - name: npm install, make test-coverage
       run: |
+        cd packages
+        cd common
         npm install
         npm test -- --coverage
 
